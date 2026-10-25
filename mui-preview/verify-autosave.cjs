@@ -24,7 +24,7 @@ const fs=require('fs'),assert=require('node:assert/strict');
  assert.equal(browserResult.scheduled,2);assert.equal(browserResult.cleared,2);
  console.log('PASS: browser timer receiver on scheduling, rescheduling and disposal');
  console.log('PASS: coalescing, serial writes, edits during save, retry, cancellation and remount recovery');
- const ts=require('C:/DYD/DYDLMS/LMSAdmin/node_modules/typescript');
+ const ts=require('typescript');
  const statusModule={};const statusCode=ts.transpileModule(fs.readFileSync('AutosaveStatus.jsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,esModuleInterop:true}}).outputText;
  new Function('require','exports',statusCode)(require,statusModule);
  const React=require('react'),{renderToStaticMarkup}=require('react-dom/server');

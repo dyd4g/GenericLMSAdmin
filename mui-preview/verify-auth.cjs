@@ -1,4 +1,4 @@
-const fs=require('fs'),assert=require('node:assert/strict'),ts=require('C:/DYD/DYDLMS/LMSAdmin/node_modules/typescript');
+const fs=require('fs'),assert=require('node:assert/strict'),ts=require('typescript');
 const compile=file=>ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
 const auth={};new Function('require','exports',compile('lib/admin-auth.js'))(()=>({connection:{identity:'https://identity.test',learning:'https://learning.test',clientId:'1'}}),auth);
 const response=(body,status=200)=>({ok:status>=200&&status<300,status,json:async()=>body});

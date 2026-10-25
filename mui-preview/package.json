@@ -1,1 +1,32 @@
-{"name":"generic-lms-admin-preview","private":true,"scripts":{"dev":"next dev -H 127.0.0.1 -p 3003"},"dependencies":{"@azure/storage-blob":"^12.32.0","@dnd-kit/core":"^6.3.1","@dnd-kit/sortable":"^10.0.0","@dnd-kit/utilities":"^3.2.2","@emotion/react":"11.14.0","@emotion/styled":"11.14.0","@mui/icons-material":"7.3.7","@mui/material":"7.3.7","dompurify":"^3.3.0","next":"^15.5.9","qrcode.react":"^4.2.0","react":"19.1.0","react-dom":"19.1.0","tus-js-client":"^4.3.1"},"overrides":{"postcss":"^8.5.23"}}
+{
+  "name": "generic-lms-admin-preview",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 3003",
+    "test": "node run-tests.cjs"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.32.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.0",
+    "@mui/icons-material": "7.3.7",
+    "@mui/material": "7.3.7",
+    "dompurify": "^3.3.0",
+    "next": "^15.5.9",
+    "qrcode.react": "^4.2.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tus-js-client": "^4.3.1"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
+  },
+  "devDependencies": {
+    "@babel/parser": "^7.29.11",
+    "qs": "^6.16.1",
+    "typescript": "^5.9.3"
+  }
+}

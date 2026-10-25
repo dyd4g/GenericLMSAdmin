@@ -1,4 +1,4 @@
-const fs=require('fs'),assert=require('node:assert/strict'),ts=require('C:/DYD/DYDLMS/LMSAdmin/node_modules/typescript');
+const fs=require('fs'),assert=require('node:assert/strict'),ts=require('typescript');
 const js=ts.transpileModule(fs.readFileSync(__dirname+'/lib/write-api.js','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,m={exports:{}};
 new Function('require','module','exports',js)(n=>n==='./read-api'?{}:require(n),m,m.exports);
 const {formPayload,orderPayload,taskResources,deleteItemRequest}=m.exports;
