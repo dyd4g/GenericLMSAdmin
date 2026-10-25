@@ -1,0 +1,13 @@
+const fs=require('fs'),assert=require('node:assert/strict'),ts=require('C:/DYD/DYDLMS/LMSAdmin/node_modules/typescript');
+const js=ts.transpileModule(fs.readFileSync(__dirname+'/lib/write-api.js','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,m={exports:{}};
+new Function('require','module','exports',js)(n=>n==='./read-api'?{}:require(n),m,m.exports);
+const {formPayload,orderPayload,taskResources,deleteItemRequest}=m.exports;
+const survey={type:'Survey',name:'S',assignedTo:'Trainee',traineeBody:'<p>x</p>'};
+const p=formPayload(survey,2);
+assert.equal(p.minPassingScore,null);assert.equal(p.revealAnswersOnFail,false);assert.equal(p.questionDisplay,'All');assert.equal(p.order,2);assert(!('type' in p));
+assert.equal(formPayload({type:'EditableForm',name:'F'},1).minPassingScore,0);
+assert.equal(formPayload({type:'Survey',name:'S',minPassingScore:0.5},1).minPassingScore,0.5);
+assert.equal(taskResources.Survey,'forms');
+assert.deepEqual(deleteItemRequest('task',{type:'Survey',id:9}),{path:'/api/forms/9',method:'DELETE'});
+assert.equal(orderPayload({type:'Survey',name:'S',isRequired:true,isEnabled:true,assignedTo:'Trainee'},3).order,3);
+console.log('Survey payload, delete path and ordering checks passed. No API requests issued.');

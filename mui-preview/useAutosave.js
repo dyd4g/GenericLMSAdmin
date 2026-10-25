@@ -1,0 +1,3 @@
+import {useEffect,useRef,useState} from 'react';
+import {AutosaveQueue} from './lib/autosave-queue';
+export default function useAutosave(write){const[states,setStates]=useState({}),writeRef=useRef(write),queueRef=useRef(null);writeRef.current=write;if(!queueRef.current)queueRef.current=new AutosaveQueue({onStatus:(key,status)=>setStates(v=>({...v,[key]:status}))});useEffect(()=>{queueRef.current.disposed=false;queueRef.current.arm();return()=>queueRef.current.dispose()},[]);return {states,schedule:(key,value)=>queueRef.current.schedule(key,value,snapshot=>writeRef.current(snapshot)),retry:key=>queueRef.current.retry(key),cancel:key=>queueRef.current.cancel(key)};}

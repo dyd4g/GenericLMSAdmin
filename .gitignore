@@ -1,0 +1,16 @@
+# dependencies and build output
+node_modules/
+.next/
+.next-*/
+*.tsbuildinfo
+
+# local copy of the existing login portal (not part of this project)
+prod/auth-copy/
+
+# local logs, env and scratch
+.env
+.env.*
+!.env.example
+*.log
+.backup/
+.claude/
