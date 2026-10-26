@@ -4,6 +4,7 @@ import { Add, ArrowBack, ArrowDownward, ArrowUpward, DeleteOutline, EditOutlined
 import DOMPurify from 'dompurify';
 import RichContentEditor from './RichContentEditor';
 import { ConfirmDialog } from './UserAssets';
+import KeyManager from './KeyManager';
 import { bookKeysUrl, bookReadersUrl, bookUrl, canWrite, canWriteUsers, certificationCourseCandidatesUrl, certificationTraineesUrl, certificationUrl, connection, writeBlockedMessage, groupBooksUrl, groupCertificationsUrl, groupsUrl, loginUrl, readApi, SessionError } from './lib/read-api';
 import { addCertificationCourseRequest, bookFormError, bookStatusRequest, certificationFormError, certificationPrivacy, certificationPublishError, certificationStatusRequest, createBookRequest, createCertificationRequest, deleteBookRequest, deleteCertificationRequest, removeCertificationCourseRequest, reorderCertificationCourseRequest, updateBookRequest, updateCertificationRequest, writeApi } from './lib/write-api';
 import { userLanguageLabels } from './lib/user-lists';
@@ -166,7 +167,7 @@ function BookDetail({ groupId, summary, onBack, onChanged }) {
     {tab === 'readers' && (readers.loading ? <Loading /> : readers.error ? <Failure error={readers.error} /> : <SimpleTable label="Book readers" columns={[['Reader', r => r.name || '—'], ['Redeemed', r => date(r.redeemedDate)]]} rows={rowsOf(readers.data)} empty="Nobody has redeemed this book yet." />)}
     {editable && <BookFormDialog open={editing} groupId={groupId} book={state.data} onClose={() => setEditing(false)} onSaved={m => { setEditing(false); setNotice(m); setReload(v => v + 1); onChanged(); }} />}
     <ConfirmDialog open={!!confirm} title={confirm?.title} confirmLabel={confirm?.label} color={confirm?.color} onClose={() => setConfirm(null)} onConfirm={() => confirm.run()} onDone={() => { const c = confirm; setConfirm(null); onChanged(c.done); if (c.leave) onBack(); else { setNotice(c.done); setReload(v => v + 1); } }}>{confirm?.body}</ConfirmDialog>
-    {tab === 'keys' && <PagedTable label="Book keys" url={page => bookKeysUrl(groupId, summary.id, { page })} empty="No keys have been generated for this book." columns={[['Key', r => r.key], ['Status', r => (r.isActive ? 'Active' : 'Inactive')], ['Activations', r => `${r.activationCount ?? 0} of ${r.maxActivationCount ?? '—'}`], ['Created', r => date(r.creationDate)], ['Last activation', r => date(r.lastActivationDate)]]} />}
+    {tab === 'keys' && <KeyManager key={summary.id} kind="book" ownerId={summary.id} groupId={groupId} ownerName={b.name} />}
   </>;
 }
 
@@ -180,7 +181,7 @@ export function LiveBooks() {
   const rows = rowsOf(state.data);
   return <>
     <Typography variant="h4" gutterBottom>Books</Typography>
-    <Typography color="text.secondary" sx={{ mb: 3 }}>The books in each group of {connection.name}. Cover and file upload, revisions, store listings and keys are still read-only.</Typography>
+    <Typography color="text.secondary" sx={{ mb: 3 }}>The books in each group of {connection.name}. Cover and file upload, revisions and store listings are still read-only.</Typography>
     {notice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setNotice(null)}>{notice}</Alert>}
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 2 }} alignItems={{ md: 'center' }}>
       <GroupPicker groupId={groupId} onChange={setGroupId} />

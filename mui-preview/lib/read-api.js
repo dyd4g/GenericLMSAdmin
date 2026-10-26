@@ -71,6 +71,7 @@ export function writeBlockedMessage(service = 'learning') {
   if (service === 'identity') return `User changes are not available in ${connection.name}. Nothing was sent.`;
   if (service === 'alerts') return `Alert changes are not available in ${connection.name}. Nothing was sent.`;
   if (service === 'books') return `Book changes are not available in ${connection.name}. Nothing was sent.`;
+  if (service === 'licenses') return `License key changes are not available in ${connection.name}. Nothing was sent.`;
   if (service === 'analytics') return `Referral changes are not available in ${connection.name}. Nothing was sent.`;
   return connection.writableGroupId == null
     ? `${connection.name} is read-only in this app. Nothing was sent.`
