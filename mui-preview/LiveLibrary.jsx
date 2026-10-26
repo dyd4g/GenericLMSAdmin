@@ -5,6 +5,8 @@ import DOMPurify from 'dompurify';
 import RichContentEditor from './RichContentEditor';
 import { ConfirmDialog } from './UserAssets';
 import KeyManager from './KeyManager';
+import { BookCoverAndFile, BookPublishing } from './BookAssets';
+import { isSystemAdmin } from './lib/admin-auth';
 import { bookKeysUrl, bookReadersUrl, bookUrl, canWrite, canWriteUsers, certificationCourseCandidatesUrl, certificationTraineesUrl, certificationUrl, connection, writeBlockedMessage, groupBooksUrl, groupCertificationsUrl, groupsUrl, loginUrl, readApi, SessionError } from './lib/read-api';
 import { addCertificationCourseRequest, bookFormError, bookStatusRequest, certificationFormError, certificationPrivacy, certificationPublishError, certificationStatusRequest, createBookRequest, createCertificationRequest, deleteBookRequest, deleteCertificationRequest, removeCertificationCourseRequest, reorderCertificationCourseRequest, updateBookRequest, updateCertificationRequest, writeApi } from './lib/write-api';
 import { userLanguageLabels } from './lib/user-lists';
@@ -136,12 +138,13 @@ function PagedTable({ url, label, columns, empty }) {
 }
 
 // ---------------- Books ----------------
-function BookDetail({ groupId, summary, onBack, onChanged }) {
+function BookDetail({ groupId, summary, onBack, onChanged, systemAdmin }) {
   const [tab, setTab] = useState('info'), [reload, setReload] = useState(0), [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(null), [notice, setNotice] = useState(null);
   const editable = canWriteUsers();
   const state = useRead(bookUrl(groupId, summary.id), reload);
   const readers = useRead(tab === 'readers' ? bookReadersUrl(groupId, summary.id) : null);
   const b = state.data || summary;
+  const assetChanged = message => { setNotice(message); setReload(v => v + 1); onChanged(); };
   return <>
     <Button startIcon={<ArrowBack />} onClick={onBack} sx={{ mb: 2 }}>Back to books</Button>
     <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
@@ -157,31 +160,32 @@ function BookDetail({ groupId, summary, onBack, onChanged }) {
     {notice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setNotice(null)}>{notice}</Alert>}
     {!editable && <Alert severity="info" sx={{ mb: 2 }}>Book changes are not available in {connection.name}, so this is read-only.</Alert>}
     {state.error && <Failure error={state.error} retry={() => setReload(v => v + 1)} />}
-    <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}><Tab value="info" label="Overview" /><Tab value="readers" label="Readers" /><Tab value="keys" label="Keys" /></Tabs>
+    <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}><Tab value="info" label="Overview" /><Tab value="media" label="Cover and file" /><Tab value="publishing" label="Revision and stores" /><Tab value="readers" label="Readers" /><Tab value="keys" label="Keys" /></Tabs>
     {tab === 'info' && <Paper variant="outlined" sx={{ p: 3 }}><Stack spacing={3}>
       <Facts items={[['Language', language(b.language)], ['Group', b.group?.name], ['Publish status', b.publishStatus], ['Revision status', b.revisionStatus], ['Store', b.storeName || b.store], ['Product ID', b.productId], ['Book file', b.fileUrl ? <a href={b.fileUrl} target="_blank" rel="noreferrer">Open file</a> : 'None']]} />
-      {b.externalProductLocations?.length > 0 && <Box><Typography variant="caption" color="text.secondary">Store listings</Typography><SimpleTable label="Store listings" columns={[['Store', r => r.storeName || r.store || '—'], ['Link', r => (r.productUrl ? <a href={r.productUrl} target="_blank" rel="noreferrer">{r.productUrl}</a> : '—')]]} rows={b.externalProductLocations} /></Box>}
       <Box><Typography variant="caption" color="text.secondary">Description</Typography><Html html={b.description} /></Box>
       {b.body && <Box><Typography variant="caption" color="text.secondary">Details</Typography><Html html={b.body} /></Box>}
     </Stack></Paper>}
     {tab === 'readers' && (readers.loading ? <Loading /> : readers.error ? <Failure error={readers.error} /> : <SimpleTable label="Book readers" columns={[['Reader', r => r.name || '—'], ['Redeemed', r => date(r.redeemedDate)]]} rows={rowsOf(readers.data)} empty="Nobody has redeemed this book yet." />)}
     {editable && <BookFormDialog open={editing} groupId={groupId} book={state.data} onClose={() => setEditing(false)} onSaved={m => { setEditing(false); setNotice(m); setReload(v => v + 1); onChanged(); }} />}
     <ConfirmDialog open={!!confirm} title={confirm?.title} confirmLabel={confirm?.label} color={confirm?.color} onClose={() => setConfirm(null)} onConfirm={() => confirm.run()} onDone={() => { const c = confirm; setConfirm(null); onChanged(c.done); if (c.leave) onBack(); else { setNotice(c.done); setReload(v => v + 1); } }}>{confirm?.body}</ConfirmDialog>
+    {tab === 'media' && state.data && <BookCoverAndFile key={summary.id} groupId={groupId} book={state.data} editable={editable} onChanged={assetChanged} />}
+    {tab === 'publishing' && state.data && <BookPublishing key={summary.id} groupId={groupId} book={state.data} editable={editable} isSystemAdmin={systemAdmin} onChanged={assetChanged} />}
     {tab === 'keys' && <KeyManager key={summary.id} kind="book" ownerId={summary.id} groupId={groupId} ownerName={b.name} />}
   </>;
 }
 
-export function LiveBooks() {
+export function LiveBooks({ profile }) {
   const [groupId, setGroupId] = useState(null), [search, setSearch] = useState(''), [page, setPage] = useState(0), [status, setStatus] = useState(''), [lang, setLang] = useState(''), [open, setOpen] = useState(null), [reload, setReload] = useState(0);
   const query = useDebounced(search.trim());
   useEffect(() => setPage(0), [query, status, lang, groupId]);
   const state = useRead(groupId ? groupBooksUrl(groupId, { search: query, page, resultsPerPage: 10, languages: lang ? [lang] : [], statuses: status ? [status] : [] }) : null, reload);
   const [creating, setCreating] = useState(false), [notice, setNotice] = useState(null), editable = canWriteUsers();
-  if (open) return <BookDetail groupId={groupId} summary={open} onBack={() => setOpen(null)} onChanged={m => { if (m) setNotice(m); setReload(v => v + 1); }} />;
+  if (open) return <BookDetail systemAdmin={isSystemAdmin(profile)} groupId={groupId} summary={open} onBack={() => setOpen(null)} onChanged={m => { if (m) setNotice(m); setReload(v => v + 1); }} />;
   const rows = rowsOf(state.data);
   return <>
     <Typography variant="h4" gutterBottom>Books</Typography>
-    <Typography color="text.secondary" sx={{ mb: 3 }}>The books in each group of {connection.name}. Cover and file upload, revisions and store listings are still read-only.</Typography>
+    <Typography color="text.secondary" sx={{ mb: 3 }}>The books in each group of {connection.name}. Cover, file, revision and store listing changes are on each book.</Typography>
     {notice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setNotice(null)}>{notice}</Alert>}
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ mb: 2 }} alignItems={{ md: 'center' }}>
       <GroupPicker groupId={groupId} onChange={setGroupId} />

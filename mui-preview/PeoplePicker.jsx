@@ -10,7 +10,7 @@ const send = request => writeApi(request.path, request.method, request.body, req
 
 // Search the people who can still be added to a course, tick one or more, and add them. Each person is added with its own request,
 // so one failure does not stop the others and the result lists who could not be added.
-export default function PeoplePicker({ open, title, noun, plural = `${noun}s`, searchLabel, candidatesUrl, makeRequest, onClose, onDone }) {
+export default function PeoplePicker({ open, title, noun, plural = `${noun}s`, searchLabel, candidatesUrl, makeRequest, onClose, onDone, allowEmptySearch = false, excludeIds = [], hint = 'Type a name or email address to find people.', alreadyIn = 'people already in the course' }) {
   const [search, setSearch] = useState(''), [query, setQuery] = useState('');
   const [state, setState] = useState({ loading: true, rows: [], error: null });
   const [picked, setPicked] = useState({}), [busy, setBusy] = useState(false), [report, setReport] = useState(null);
@@ -20,14 +20,14 @@ export default function PeoplePicker({ open, title, noun, plural = `${noun}s`, s
   useEffect(() => {
     if (!open) return undefined;
     // The service refuses an empty search (HTTP 400), so nothing is asked until the admin types something.
-    if (!query.trim()) { setState({ loading: false, rows: [], error: null }); return undefined; }
+    if (!allowEmptySearch && !query.trim()) { setState({ loading: false, rows: [], error: null }); return undefined; }
     const abort = new AbortController();
     setState(current => ({ ...current, loading: true, error: null }));
     readApi(candidatesUrl(query), abort.signal)
-      .then(data => setState({ loading: false, rows: candidateRows(data), error: null }))
+      .then(data => setState({ loading: false, rows: candidateRows(data).filter(row => !excludeIds.includes(Number(row.id))), error: null }))
       .catch(error => { if (error.name !== 'AbortError') setState({ loading: false, rows: [], error: error.message }); });
     return () => abort.abort();
-  }, [open, query, candidatesUrl]);
+  }, [open, query, candidatesUrl]); // excludeIds is a fixed list from the caller
 
   const chosen = Object.keys(picked).filter(id => picked[id]).map(Number);
   const toggle = id => setPicked(current => ({ ...current, [id]: !current[id] }));
@@ -52,7 +52,7 @@ export default function PeoplePicker({ open, title, noun, plural = `${noun}s`, s
         {report.done.length ? `${report.done.length} added. ` : ''}{report.failed.length} could not be added: {report.failed.map(item => `${(() => { const found = state.rows.find(row => Number(row.id) === item.id); return found?.name || found?.fullName || `#${item.id}`; })()} (${item.message})`).join('; ')}
       </Alert>}
       {state.loading ? <Stack role="status" alignItems="center" sx={{ py: 4 }}><CircularProgress size={24} /></Stack>
-        : !state.rows.length ? <Typography color="text.secondary" sx={{ py: 2 }}>{query.trim() ? `No ${plural} match your search (people already in the course are not listed).` : 'Type a name or email address to find people.'}</Typography>
+        : !state.rows.length ? <Typography color="text.secondary" sx={{ py: 2 }}>{query.trim() ? `No ${plural} match your search (${alreadyIn} are not listed).` : allowEmptySearch ? `There are no ${plural} to add.` : hint}</Typography>
         : <List dense aria-label={`${noun} candidates`} sx={{ maxHeight: 360, overflow: 'auto' }}>{state.rows.map(row => <ListItem key={row.id} disablePadding>
           <ListItemButton disabled={busy} onClick={() => toggle(row.id)}>
             <ListItemIcon><Checkbox edge="start" tabIndex={-1} disableRipple checked={Boolean(picked[row.id])} slotProps={{ input: { 'aria-label': `Select ${row.name || row.fullName || row.email}` } }} /></ListItemIcon>
