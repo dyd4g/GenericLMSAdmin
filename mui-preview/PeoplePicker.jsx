@@ -49,14 +49,14 @@ export default function PeoplePicker({ open, title, noun, plural = `${noun}s`, s
         slotProps={{ input: { startAdornment: <Search fontSize="small" sx={{ mr: 1 }} /> } }} />
       {state.error && <Alert severity="error" sx={{ mb: 1 }}>{state.error}</Alert>}
       {report && <Alert severity="warning" sx={{ mb: 1 }}>
-        {report.done.length ? `${report.done.length} added. ` : ''}{report.failed.length} could not be added: {report.failed.map(item => `${state.rows.find(row => Number(row.id) === item.id)?.name || `#${item.id}`} (${item.message})`).join('; ')}
+        {report.done.length ? `${report.done.length} added. ` : ''}{report.failed.length} could not be added: {report.failed.map(item => `${(() => { const found = state.rows.find(row => Number(row.id) === item.id); return found?.name || found?.fullName || `#${item.id}`; })()} (${item.message})`).join('; ')}
       </Alert>}
       {state.loading ? <Stack role="status" alignItems="center" sx={{ py: 4 }}><CircularProgress size={24} /></Stack>
         : !state.rows.length ? <Typography color="text.secondary" sx={{ py: 2 }}>{query.trim() ? `No ${plural} match your search (people already in the course are not listed).` : 'Type a name or email address to find people.'}</Typography>
         : <List dense aria-label={`${noun} candidates`} sx={{ maxHeight: 360, overflow: 'auto' }}>{state.rows.map(row => <ListItem key={row.id} disablePadding>
           <ListItemButton disabled={busy} onClick={() => toggle(row.id)}>
-            <ListItemIcon><Checkbox edge="start" tabIndex={-1} disableRipple checked={Boolean(picked[row.id])} slotProps={{ input: { 'aria-label': `Select ${row.name || row.email}` } }} /></ListItemIcon>
-            <ListItemText primary={row.name || row.email} secondary={row.name ? row.email : undefined} />
+            <ListItemIcon><Checkbox edge="start" tabIndex={-1} disableRipple checked={Boolean(picked[row.id])} slotProps={{ input: { 'aria-label': `Select ${row.name || row.fullName || row.email}` } }} /></ListItemIcon>
+            <ListItemText primary={row.name || row.fullName || row.email} secondary={(row.name || row.fullName) ? row.email : undefined} />
           </ListItemButton>
         </ListItem>)}</List>}
     </DialogContent>
