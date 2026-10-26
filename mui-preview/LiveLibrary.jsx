@@ -153,6 +153,7 @@ function BookDetail({ groupId, summary, onBack, onChanged, systemAdmin }) {
       <Stack direction="row" spacing={1} sx={{ ml: 'auto !important' }}>
         <Button startIcon={<Refresh />} disabled={state.loading} onClick={() => setReload(v => v + 1)}>Refresh</Button>
         {editable && b.publishStatus !== 'Archived' && <Button startIcon={<EditOutlined />} disabled={!state.data} onClick={() => setEditing(true)}>Edit</Button>}
+        {editable && b.publishStatus === 'Draft' && b.fileUrl && <Button variant="contained" onClick={() => setConfirm({ title: 'Publish this book?', body: `${b.name} will be published and readers can start using it.`, label: 'Publish', color: 'primary', run: () => send(bookStatusRequest(groupId, summary.id, 'Published')), done: 'Book published.' })}>Publish</Button>}
         {editable && b.publishStatus === 'Published' && <Button color="warning" onClick={() => setConfirm({ title: 'Archive this book?', body: `${b.name} will be archived.`, label: 'Archive', color: 'warning', run: () => send(bookStatusRequest(groupId, summary.id, 'Archived')), done: 'Book archived.' })}>Archive</Button>}
         {editable && <Button color="error" startIcon={<DeleteOutline />} onClick={() => setConfirm({ title: 'Delete this book?', body: `${b.name} will be permanently deleted.`, label: 'Delete', color: 'error', run: () => send(deleteBookRequest(groupId, summary.id)), done: 'Book deleted.', leave: true })}>Delete</Button>}
       </Stack>
